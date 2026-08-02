@@ -15,6 +15,7 @@ const defaultField = {
 const elements = {
   board: document.querySelector("#board"),
   editor: document.querySelector("#codeEditor"),
+  syntaxHighlight: document.querySelector("#syntaxHighlight"),
   lineNumbers: document.querySelector("#lineNumbers"),
   cursorPosition: document.querySelector("#cursorPosition"),
   runButton: document.querySelector("#runButton"),
@@ -492,9 +493,67 @@ function updateCursorPosition() {
   elements.cursorPosition.textContent = `Строка ${lines.length}, столбец ${lines.at(-1).length + 1}`;
 }
 
+function escapeHtml(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+function isKnownCondition(value) {
+  const condition = normalize(value).replace(/^не\s+/, "");
+  return [
+    "справа свободно", "слева свободно", "сверху свободно", "снизу свободно",
+    "клетка чистая", "клетка закрашена",
+  ].includes(condition);
+}
+
+function highlightCodePart(code) {
+  const normalized = normalize(code);
+  const escaped = escapeHtml(code);
+  const commands = ["вверх", "вниз", "влево", "вправо", "закрасить"];
+  const singleKeywords = ["нач", "кон", "кц", "иначе", "все"];
+
+  if (commands.includes(normalized)) return `<span class="syntax-command">${escaped}</span>`;
+  if (singleKeywords.includes(normalized)) return `<span class="syntax-keyword">${escaped}</span>`;
+  if (/^использовать\s+робот$/u.test(normalized)) return `<span class="syntax-keyword">${escaped}</span>`;
+
+  let match = code.match(/^(\s*)(алг)(.*)$/iu);
+  if (match) {
+    return `${escapeHtml(match[1])}<span class="syntax-keyword">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}`;
+  }
+
+  match = code.match(/^(\s*)(нц)(\s+)(\d+)(\s+)(раз)\s*$/iu);
+  if (match) {
+    return `${escapeHtml(match[1])}<span class="syntax-keyword">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="syntax-number">${match[4]}</span>${escapeHtml(match[5])}<span class="syntax-keyword">${escapeHtml(match[6])}</span>`;
+  }
+
+  match = code.match(/^(\s*)(нц)(\s+)(пока)(\s+)(.+?)\s*$/iu);
+  if (match && isKnownCondition(match[6])) {
+    return `${escapeHtml(match[1])}<span class="syntax-keyword">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="syntax-keyword">${escapeHtml(match[4])}</span>${escapeHtml(match[5])}<span class="syntax-condition">${escapeHtml(match[6])}</span>`;
+  }
+
+  match = code.match(/^(\s*)(если)(\s+)(.+?)(\s+)(то)\s*$/iu);
+  if (match && isKnownCondition(match[4])) {
+    return `${escapeHtml(match[1])}<span class="syntax-keyword">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="syntax-condition">${escapeHtml(match[4])}</span>${escapeHtml(match[5])}<span class="syntax-keyword">${escapeHtml(match[6])}</span>`;
+  }
+
+  return escaped;
+}
+
+function updateSyntaxHighlight() {
+  elements.syntaxHighlight.innerHTML = elements.editor.value.split("\n").map((line) => {
+    const commentIndex = line.indexOf("|");
+    if (commentIndex < 0) return highlightCodePart(line);
+    const code = line.slice(0, commentIndex);
+    const comment = line.slice(commentIndex);
+    return `${highlightCodePart(code)}<span class="syntax-comment">${escapeHtml(comment)}</span>`;
+  }).join("\n");
+  elements.syntaxHighlight.scrollTop = elements.editor.scrollTop;
+  elements.syntaxHighlight.scrollLeft = elements.editor.scrollLeft;
+}
+
 function updateEditorChrome() {
   const count = Math.max(1, elements.editor.value.split("\n").length);
   elements.lineNumbers.textContent = Array.from({ length: count }, (_, index) => index + 1).join("\n");
+  updateSyntaxHighlight();
   updateCursorPosition();
 }
 
@@ -507,7 +566,11 @@ elements.editor.addEventListener("input", () => {
   state.program = null;
   updateEditorChrome();
 });
-elements.editor.addEventListener("scroll", () => { elements.lineNumbers.scrollTop = elements.editor.scrollTop; });
+elements.editor.addEventListener("scroll", () => {
+  elements.lineNumbers.scrollTop = elements.editor.scrollTop;
+  elements.syntaxHighlight.scrollTop = elements.editor.scrollTop;
+  elements.syntaxHighlight.scrollLeft = elements.editor.scrollLeft;
+});
 elements.editor.addEventListener("click", updateCursorPosition);
 elements.editor.addEventListener("keyup", updateCursorPosition);
 elements.editor.addEventListener("keydown", (event) => {
