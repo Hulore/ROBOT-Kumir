@@ -232,14 +232,13 @@ button:focus-visible, textarea:focus-visible, input:focus-visible {
 }
 .line-numbers { padding: 17px 13px 17px 0; overflow: hidden; color: var(--code-muted); border-right: 1px solid var(--code-line); text-align: right; user-select: none; }
 .syntax-highlight, #codeEditor { position: absolute; inset: 0; width: 100%; height: 100%; padding: 17px 18px; white-space: pre; overflow: auto; }
-.syntax-highlight { pointer-events: none; scrollbar-width: none; }
+.syntax-highlight { color: #747b74; pointer-events: none; scrollbar-width: none; }
 .syntax-highlight::-webkit-scrollbar { display: none; }
 #codeEditor { resize: none; outline: none; color: transparent; -webkit-text-fill-color: transparent; caret-color: #f3f5ef; }
 #codeEditor::selection { background: rgba(92, 154, 115, 0.4); }
-.syntax-command, .syntax-keyword { color: #72b7ff; font-weight: 600; }
-.syntax-condition { color: #85d1b0; }
-.syntax-number { color: #efbd7a; }
-.syntax-comment { color: #747c73; font-style: italic; }
+.syntax-command, .syntax-condition { color: #72b7ff; font-weight: 600; }
+.syntax-keyword, .syntax-number, .syntax-plain { color: #e1e5dd; font-weight: 500; }
+.syntax-comment { color: #626a63; font-style: italic; }
 .editor-statusbar { height: 28px; padding: 0 13px; border-top: 1px solid #383d37; }
 
 .controls { margin-top: 14px; flex-wrap: wrap; }

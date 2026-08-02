@@ -517,7 +517,7 @@ function highlightCodePart(code) {
 
   let match = code.match(/^(\s*)(алг)(.*)$/iu);
   if (match) {
-    return `${escapeHtml(match[1])}<span class="syntax-keyword">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}`;
+    return `${escapeHtml(match[1])}<span class="syntax-keyword">${escapeHtml(match[2])}</span><span class="syntax-plain">${escapeHtml(match[3])}</span>`;
   }
 
   match = code.match(/^(\s*)(нц)(\s+)(\d+)(\s+)(раз)\s*$/iu);
