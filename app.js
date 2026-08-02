@@ -56,8 +56,8 @@ const storage = {
 
 function sanitizeField(value) {
   const source = value && typeof value === "object" ? value : defaultField;
-  const cols = Math.max(3, Math.min(14, Number(source.cols) || defaultField.cols));
-  const rows = Math.max(3, Math.min(12, Number(source.rows) || defaultField.rows));
+  const cols = Math.max(3, Math.min(30, Number(source.cols) || defaultField.cols));
+  const rows = Math.max(3, Math.min(24, Number(source.rows) || defaultField.rows));
   const inBounds = ([x, y]) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < cols && y < rows;
   return {
     cols,
@@ -81,6 +81,15 @@ const state = {
   isRunning: false,
   runToken: 0,
   tool: "robot",
+};
+
+const editorHistory = {
+  undo: [],
+  redo: [],
+  previous: null,
+  lastInputAt: 0,
+  lastInputType: "",
+  applying: false,
 };
 
 function cellKey(x, y) {
@@ -235,8 +244,8 @@ function resetSimulation(message = true) {
 
 function resizeField() {
   stopRunning();
-  const cols = Math.max(3, Math.min(14, Number(elements.columnsInput.value) || 8));
-  const rows = Math.max(3, Math.min(12, Number(elements.rowsInput.value) || 7));
+  const cols = Math.max(3, Math.min(30, Number(elements.columnsInput.value) || 8));
+  const rows = Math.max(3, Math.min(24, Number(elements.rowsInput.value) || 7));
   state.field.cols = cols;
   state.field.rows = rows;
   state.field.start.x = Math.min(state.field.start.x, cols - 1);
@@ -557,11 +566,75 @@ function updateEditorChrome() {
   updateCursorPosition();
 }
 
+function editorSnapshot() {
+  return {
+    value: elements.editor.value,
+    start: elements.editor.selectionStart,
+    end: elements.editor.selectionEnd,
+  };
+}
+
+function restoreEditorSnapshot(snapshot) {
+  editorHistory.applying = true;
+  elements.editor.value = snapshot.value;
+  elements.editor.setSelectionRange(snapshot.start, snapshot.end);
+  editorHistory.previous = editorSnapshot();
+  editorHistory.lastInputAt = 0;
+  editorHistory.lastInputType = "";
+  editorHistory.applying = false;
+  storage.set("code", elements.editor.value);
+  state.program = null;
+  updateEditorChrome();
+}
+
+function undoEditor() {
+  const snapshot = editorHistory.undo.pop();
+  if (!snapshot) return;
+  editorHistory.redo.push(editorSnapshot());
+  restoreEditorSnapshot(snapshot);
+}
+
+function redoEditor() {
+  const snapshot = editorHistory.redo.pop();
+  if (!snapshot) return;
+  editorHistory.undo.push(editorSnapshot());
+  restoreEditorSnapshot(snapshot);
+}
+
+function replaceEditorValue(value) {
+  if (value === elements.editor.value) return;
+  editorHistory.undo.push(editorSnapshot());
+  if (editorHistory.undo.length > 150) editorHistory.undo.shift();
+  editorHistory.redo = [];
+  elements.editor.value = value;
+  elements.editor.setSelectionRange(value.length, value.length);
+  editorHistory.previous = editorSnapshot();
+  editorHistory.lastInputAt = 0;
+  storage.set("code", value);
+  state.program = null;
+  updateEditorChrome();
+}
+
 elements.editor.value = storage.get("code", defaultCode);
+editorHistory.previous = editorSnapshot();
 elements.columnsInput.value = state.field.cols;
 elements.rowsInput.value = state.field.rows;
 
-elements.editor.addEventListener("input", () => {
+elements.editor.addEventListener("input", (event) => {
+  if (!editorHistory.applying) {
+    const now = Date.now();
+    const inputType = event.inputType || "programmatic";
+    const groupable = ["insertText", "deleteContentBackward", "deleteContentForward"].includes(inputType);
+    const canMerge = groupable && inputType === editorHistory.lastInputType && now - editorHistory.lastInputAt < 700;
+    if (!canMerge && editorHistory.previous && editorHistory.previous.value !== elements.editor.value) {
+      editorHistory.undo.push(editorHistory.previous);
+      if (editorHistory.undo.length > 150) editorHistory.undo.shift();
+    }
+    editorHistory.redo = [];
+    editorHistory.previous = editorSnapshot();
+    editorHistory.lastInputAt = now;
+    editorHistory.lastInputType = inputType;
+  }
   storage.set("code", elements.editor.value);
   state.program = null;
   updateEditorChrome();
@@ -574,6 +647,20 @@ elements.editor.addEventListener("scroll", () => {
 elements.editor.addEventListener("click", updateCursorPosition);
 elements.editor.addEventListener("keyup", updateCursorPosition);
 elements.editor.addEventListener("keydown", (event) => {
+  const modifier = event.ctrlKey || event.metaKey;
+  const isUndoKey = event.code === "KeyZ" || event.key.toLocaleLowerCase() === "z";
+  const isRedoKey = event.code === "KeyY" || event.key.toLocaleLowerCase() === "y";
+  if (modifier && isUndoKey) {
+    event.preventDefault();
+    if (event.shiftKey) redoEditor();
+    else undoEditor();
+    return;
+  }
+  if (modifier && isRedoKey) {
+    event.preventDefault();
+    redoEditor();
+    return;
+  }
   if (event.key !== "Tab") return;
   event.preventDefault();
   elements.editor.setRangeText("  ", elements.editor.selectionStart, elements.editor.selectionEnd, "end");
@@ -599,10 +686,7 @@ elements.clearFieldButton.addEventListener("click", () => {
 });
 elements.clearCodeButton.addEventListener("click", () => {
   if (elements.editor.value.trim() && !window.confirm("Очистить редактор кода?")) return;
-  elements.editor.value = "";
-  storage.set("code", "");
-  state.program = null;
-  updateEditorChrome();
+  replaceEditorValue("");
   elements.editor.focus();
 });
 
