@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f2eb" />
+    <meta
+      name="description"
+      content="Веб-среда для исполнителя Робот: настройте поле, пишите алгоритмы и запускайте их прямо в браузере."
+    />
+    <title>КУМИР · Робот</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="На главную">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="5" y="8" width="22" height="18" rx="6" stroke="currentColor" stroke-width="2.4" />
+              <path d="M16 8V4M12.5 18h7M11 14h.01M21 14h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>КУМИР <b>Робот</b></span>
+        </a>
+
+        <div class="topbar-actions">
+          <button class="icon-button" id="helpButton" type="button" title="Справка" aria-label="Открыть справку">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9.8 9.2a2.35 2.35 0 0 1 4.54.85c0 1.55-2.34 1.9-2.34 3.45M12 17.3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button class="ghost-button" id="themeButton" type="button" aria-label="Сменить тему">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 15.1A8 8 0 0 1 8.9 4a8 8 0 1 0 11.1 11.1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            <span>Тема</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="editor-panel panel">
+          <div class="panel-heading editor-heading">
+            <div>
+              <p class="eyebrow">Алгоритм</p>
+              <h1>Редактор кода</h1>
+            </div>
+            <button class="text-button" id="clearCodeButton" type="button">Очистить</button>
+          </div>
+          <p class="task-description">Напишите алгоритм для исполнителя Робот.</p>
+
+          <div class="editor-wrap">
+            <div class="editor-topline">
+              <div class="file-tab"><span class="status-dot"></span> robot.kum</div>
+              <span class="language-label">КУМИР</span>
+            </div>
+            <div class="code-area">
+              <pre class="line-numbers" id="lineNumbers" aria-hidden="true">1</pre>
+              <textarea
+                id="codeEditor"
+                aria-label="Редактор алгоритма"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              ></textarea>
+            </div>
+            <div class="editor-statusbar">
+              <span id="cursorPosition">Строка 1, столбец 1</span>
+              <span>UTF-8</span>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="primary-button" id="runButton" type="button">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
+              Запустить
+              <kbd>Ctrl ↵</kbd>
+            </button>
+            <button class="secondary-button" id="stepButton" type="button" title="Выполнить один шаг">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 5 9 7-9 7V5ZM18 5v14" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              Шаг
+            </button>
+            <button class="secondary-button" id="resetButton" type="button" title="Вернуть робота в начало">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8a8 8 0 1 1-.7 6.7M5 8V3M5 8h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Сброс
+            </button>
+          </div>
+
+          <div class="console" id="consoleBox" role="status" aria-live="polite">
+            <span class="console-icon" id="consoleIcon">›</span>
+            <p id="consoleText">Среда готова. Напишите алгоритм и нажмите «Запустить».</p>
+          </div>
+        </section>
+
+        <section class="robot-panel panel">
+          <div class="panel-heading robot-heading">
+            <div>
+              <p class="eyebrow">Свободный режим</p>
+              <h2>Поле Робота</h2>
+            </div>
+            <div class="speed-control">
+              <label for="speedRange">Скорость</label>
+              <input id="speedRange" type="range" min="1" max="5" value="3" />
+            </div>
+          </div>
+
+          <div class="field-settings">
+            <div class="size-control">
+              <label>Размер поля</label>
+              <div>
+                <input id="columnsInput" type="number" min="3" max="14" value="8" aria-label="Количество столбцов" />
+                <span>×</span>
+                <input id="rowsInput" type="number" min="3" max="12" value="7" aria-label="Количество строк" />
+              </div>
+            </div>
+            <div class="tool-picker" role="toolbar" aria-label="Инструменты поля">
+              <button class="tool-button active" type="button" data-tool="robot" title="Поставить Робота">
+                <span class="tool-icon robot-tool">●</span> Робот
+              </button>
+              <button class="tool-button" type="button" data-tool="goal" title="Добавить или убрать цель">
+                <span class="tool-icon goal-tool"></span> Цель
+              </button>
+              <button class="tool-button" type="button" data-tool="wall" title="Нажмите рядом с гранью клетки">
+                <span class="tool-icon wall-tool"></span> Стена
+              </button>
+              <button class="tool-button" type="button" data-tool="eraser" title="Очистить клетку">
+                <span class="tool-icon">×</span> Ластик
+              </button>
+            </div>
+          </div>
+          <div class="board-stage">
+            <div class="board editable" id="board" role="grid" aria-label="Редактируемое поле Робота"></div>
+          </div>
+          <div class="board-legend">
+            <span><i class="legend-goal"></i> Цель</span>
+            <span><i class="legend-painted"></i> Закрашено</span>
+            <span><i class="legend-wall"></i> Стена</span>
+          </div>
+          <div class="edit-note">
+            Выберите инструмент и нажмите на клетку. Для стены нажимайте ближе к нужной грани клетки.
+            <button id="clearFieldButton" type="button">Очистить поле</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="help-dialog" id="helpDialog">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">Краткий справочник</p><h2>Команды Робота</h2></div>
+        <button class="icon-button" id="closeHelpButton" type="button" aria-label="Закрыть">×</button>
+      </div>
+      <div class="command-grid">
+        <code>вверх</code><span>перейти на клетку выше</span>
+        <code>вниз</code><span>перейти на клетку ниже</span>
+        <code>влево</code><span>перейти на клетку слева</span>
+        <code>вправо</code><span>перейти на клетку справа</span>
+        <code>закрасить</code><span>закрасить текущую клетку</span>
+        <code>нц 4 раз … кц</code><span>повторить блок команд</span>
+        <code>нц пока справа свободно … кц</code><span>цикл с условием</span>
+        <code>если клетка чистая то … все</code><span>ветвление</span>
+      </div>
+      <p class="dialog-note">Поддерживаются условия: <code>справа/слева/сверху/снизу свободно</code>, <code>клетка чистая</code> и <code>клетка закрашена</code>. Комментарий начинается с символа <code>|</code>.</p>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
